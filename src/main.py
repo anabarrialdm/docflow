@@ -52,7 +52,20 @@ def run():
         answers_this_round = []
         for question in questions:
             print(f"{question}")
+            print("(escribe /generar para generar el documento ahora)")
             answer = input("Tu respuesta: >>> ").strip()
+            
+            if answer.lower() == "/generar":
+                print("\n✓ Generando documento con la información actual...\n")
+                conversation.extend(answers_this_round)
+                document = generate_document(description, conversation)
+                filename = save_document(document, process_name)
+                print("====================================")
+                print(f"✓ Documento guardado en: {filename}")
+                print("====================================\n")
+                print(document)
+                return
+
             answers_this_round.append({
                 "question": question,
                 "answer": answer
