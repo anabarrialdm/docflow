@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from ai_client import get_next_questions, generate_document
 from document import save_document
 from audiorecorder import audiorecorder
+from file_handler import process_uploaded_file
 st.set_page_config(page_title="DocFlow", page_icon="📄")
 
 st.title("📄 DocFlow")
@@ -34,6 +35,8 @@ if "document" not in st.session_state:
     st.session_state.document = ""
 if "filename" not in st.session_state:
     st.session_state.filename = ""
+if "files" not in st.session_state:
+    st.session_state.files = []
 
 # --- Etapa 1: Descripción inicial ---
 if st.session_state.stage == "inicio":
@@ -42,12 +45,34 @@ if st.session_state.stage == "inicio":
     process_name = st.text_input("Nombre del proceso", placeholder="Ej: Registro de cliente nuevo")
     description = st.text_area("Descríbelo brevemente", placeholder="Explica qué es, cómo funciona, quién lo hace...", height=150)
 
+    st.divider()
+    st.markdown("**Adjuntar archivos de contexto** *(opcional)*")
+    st.caption("Puedes adjuntar documentos existentes, capturas de pantalla o cualquier archivo relacionado al proceso.")
+
+    uploaded_files = st.file_uploader(
+        "Archivos",
+        accept_multiple_files=True,
+        type=["pdf", "docx", "txt", "jpg", "jpeg", "png", "webp"],
+        label_visibility="collapsed"
+    )
+
     if st.button("Comenzar", type="primary"):
         if not process_name or not description:
-            st.warning("Por favor completa ambos campos.")
+            st.warning("Por favor completa el nombre y la descripción.")
         else:
+            processed_files = []
+            if uploaded_files:
+                with st.spinner("Procesando archivos..."):
+                    for f in uploaded_files:
+                        result = process_uploaded_file(f.read(), f.name)
+                        if result["type"] != "unsupported":
+                            processed_files.append(result)
+                        else:
+                            st.warning(f"Formato no soportado: {f.name}")
+
             st.session_state.process_name = process_name
             st.session_state.description = description
+            st.session_state.files = processed_files
             st.session_state.stage = "preguntas"
             st.rerun()
 
@@ -65,9 +90,10 @@ elif st.session_state.stage == "preguntas":
     if not st.session_state.current_questions:
         with st.spinner("DocFlow está analizando..."):
             response = get_next_questions(
-                st.session_state.description,
-                st.session_state.conversation
-            )
+    st.session_state.description,
+    st.session_state.conversation,
+    st.session_state.files
+)
 
         if response.strip().upper() == "LISTO":
             st.session_state.stage = "generando"
@@ -154,9 +180,10 @@ elif st.session_state.stage == "preguntas":
 elif st.session_state.stage == "generando":
     with st.spinner("Generando documento..."):
         document = generate_document(
-            st.session_state.description,
-            st.session_state.conversation
-        )
+    st.session_state.description,
+    st.session_state.conversation,
+    st.session_state.files
+)
         filename = save_document(document, st.session_state.process_name)
         st.session_state.document = document
         st.session_state.filename = filename
