@@ -3,9 +3,15 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 import streamlit as st
+import whisper
+import tempfile
+import os
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+
 from ai_client import get_next_questions, generate_document
 from document import save_document
-
+from audiorecorder import audiorecorder
 st.set_page_config(page_title="DocFlow", page_icon="📄")
 
 st.title("📄 DocFlow")
@@ -79,10 +85,43 @@ elif st.session_state.stage == "preguntas":
         st.markdown("Responde las siguientes preguntas:")
         st.divider()
 
+        if "whisper_model" not in st.session_state:
+            with st.spinner("Cargando modelo de voz..."):
+                st.session_state.whisper_model = whisper.load_model("base")
+
         answers = []
         for i, question in enumerate(st.session_state.current_questions):
-            answer = st.text_area(question, key=f"q_{i}", height=80)
-            answers.append(answer)
+            st.markdown(f"**{question}**")
+            
+            tab1, tab2 = st.tabs(["✍️ Escribir", "🎤 Hablar"])
+            
+            with tab1:
+                answer_text = st.text_area(
+                    "Respuesta", 
+                    key=f"q_text_{i}", 
+                    height=80,
+                    label_visibility="collapsed"
+                )
+
+            with tab2:
+                audio = audiorecorder(
+                    start_prompt="🎤 Grabar",
+                    stop_prompt="⏹ Detener",
+                    key=f"q_audio_{i}"
+                )
+                
+                answer_voice = ""
+                if len(audio) > 0:
+                    with st.spinner("Transcribiendo..."):
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                            audio.export(f.name, format="wav")
+                            result = st.session_state.whisper_model.transcribe(f.name, language="es")
+                            answer_voice = result["text"].strip()
+                            os.unlink(f.name)
+                    st.success(f"Transcripción: {answer_voice}")
+
+            final_answer = answer_voice if answer_voice else answer_text
+            answers.append(final_answer)
 
         col1, col2 = st.columns(2)
 
