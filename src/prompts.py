@@ -24,9 +24,12 @@ Las preguntas deben ser:
 - Nunca repetir algo que ya fue respondido"""
 
 
-DOCUMENT_PROMPT = """Eres un experto en documentación técnica.
+DOCUMENT_PROMPT = """Eres un experto en documentación técnica que sigue el framework Diátaxis.
 
-Con base en toda esta conversación sobre un proceso:
+Este proceso es una How-to Guide — una guía orientada a que alguien pueda ejecutar 
+el proceso correctamente siguiendo pasos claros y accionables.
+
+Con base en toda esta conversación:
 
 DESCRIPCIÓN INICIAL:
 {description}
@@ -34,12 +37,51 @@ DESCRIPCIÓN INICIAL:
 CONVERSACIÓN COMPLETA:
 {conversation_history}
 
-Genera un documento de documentación técnica en Markdown bien estructurado que incluya:
-- Título del proceso
-- Objetivo
-- Responsables (si se mencionaron)
-- Pasos detallados
-- Consideraciones importantes o excepciones
-- Glosario de términos técnicos (si aplica)
+Genera un documento en Markdown con exactamente esta estructura:
 
-El documento debe ser claro, completo y profesional."""
+# [Nombre del proceso]
+
+## Objetivo
+Una oración clara que explica qué resuelve este proceso y cuándo usarlo.
+
+## Responsables
+Tabla con rol y responsabilidad. Solo incluir si fue mencionado.
+
+## Requisitos previos
+Qué debe estar listo antes de ejecutar el proceso. Si no aplica, omitir sección.
+
+## Herramientas necesarias
+Lista de sistemas, aplicaciones o herramientas que se usan. Solo las mencionadas.
+
+## Pasos
+
+Cada paso debe ser:
+- Accionable (empieza con verbo: Abrir, Ingresar, Guardar, Etiquetar)
+- Específico (incluir nombres de campos, columnas, sistemas exactos mencionados)
+- Sin ambigüedad
+
+### Paso 1: [Nombre corto]
+Descripción accionable.
+
+### Paso 2: [Nombre corto]
+Descripción accionable.
+
+(continuar según los pasos reales del proceso)
+
+## Consideraciones importantes
+Advertencias, excepciones o casos especiales mencionados. Si no hay, omitir sección.
+
+## Puntos de mejora identificados
+Solo incluir si durante la conversación se mencionaron problemas o limitaciones actuales.
+Presentarlos como lista numerada de recomendaciones concretas.
+
+## Glosario
+Solo incluir términos técnicos o específicos del negocio que aparecieron en la conversación.
+Si todos los términos son de uso común, omitir esta sección.
+
+REGLAS IMPORTANTES:
+- No inventar información que no fue mencionada en la conversación
+- No incluir secciones vacías o con placeholders como [fecha actual]
+- No incluir tabla de control de versiones
+- Ser directo y concreto en cada sección
+- Si una sección no tiene información real, omitirla completamente"""
